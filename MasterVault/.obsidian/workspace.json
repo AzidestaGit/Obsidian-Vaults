@@ -1,24 +1,24 @@
 {
   "main": {
-    "id": "f176bcc63ee5dbe9",
+    "id": "9d9bde1ccf54eb3e",
     "type": "split",
     "children": [
       {
-        "id": "aac45aa3843cb0c6",
+        "id": "6a85a355774cc404",
         "type": "tabs",
         "children": [
           {
-            "id": "9b747d9cdd3bca22",
+            "id": "973379fc8b7907aa",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Welcome.md",
+                "file": "001 TTRPG System/Core Stats/Soul.md",
                 "mode": "source",
-                "source": false
+                "source": true
               },
               "icon": "lucide-file",
-              "title": "Welcome"
+              "title": "Soul"
             }
           }
         ]
@@ -27,15 +27,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "f43877caad248c92",
+    "id": "6946d7414a3681d6",
     "type": "split",
     "children": [
       {
-        "id": "86d4dd854f26fef3",
+        "id": "774465c573450e22",
         "type": "tabs",
         "children": [
           {
-            "id": "818df655a1618122",
+            "id": "bf8f17899488a9d4",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -48,7 +48,7 @@
             }
           },
           {
-            "id": "1b7167b8f1601110",
+            "id": "23b952ccc94e6f35",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -65,7 +65,7 @@
             }
           },
           {
-            "id": "d232cf7a79b29ba5",
+            "id": "374e3a5ccfc3eaca",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -81,20 +81,20 @@
     "width": 300
   },
   "right": {
-    "id": "fe6a1fb671572310",
+    "id": "a34c6f396b0181e9",
     "type": "split",
     "children": [
       {
-        "id": "aa5ba7398762fb7f",
+        "id": "0d3185b385fbb791",
         "type": "tabs",
         "children": [
           {
-            "id": "21cbbdd6bce2bc9d",
+            "id": "95bab41ecc40b439",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Welcome.md",
+                "file": "001 TTRPG System/Core Stats/Soul.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,25 +104,25 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Welcome"
+              "title": "Backlinks for Soul"
             }
           },
           {
-            "id": "d1824ccea347a41e",
+            "id": "27f6d7ab50912919",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Welcome.md",
+                "file": "001 TTRPG System/Core Stats/Soul.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Welcome"
+              "title": "Outgoing links from Soul"
             }
           },
           {
-            "id": "79e7b4e4f44984c3",
+            "id": "0e5ad5b775ebb002",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -137,18 +137,18 @@
             }
           },
           {
-            "id": "bdbecd26c9c71358",
+            "id": "9f734c42709727bf",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "Welcome.md",
+                "file": "001 TTRPG System/Core Stats/Soul.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Welcome"
+              "title": "Outline of Soul"
             }
           }
         ]
@@ -165,11 +165,31 @@
       "canvas:Create new canvas": false,
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
-      "command-palette:Open command palette": false
+      "command-palette:Open command palette": false,
+      "obsidian-git:Open Git source control": false
     }
   },
-  "active": "818df655a1618122",
+  "active": "973379fc8b7907aa",
   "lastOpenFiles": [
+    "001 TTRPG System/Core Stats/Mind.md",
+    "001 TTRPG System/Core Stats/Body.md",
+    "003 New AI Chatbot",
+    "002 MTG Arena/Card Wishlists/MTGA Wishlist.md.md",
+    "002 MTG Arena/Card Collection.md",
+    "002 MTG Arena/Card Wishlists",
+    "002 MTG Arena",
+    "001 TTRPG System/Core Stats/Point Buy System/Recommended Point Buy Tiers.md",
+    "001 TTRPG System/Core Stats/Point Buy System/Point Buy System.md",
+    "001 TTRPG System/Core Stats/Soul.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Spark.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Pulse.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Thread.md",
+    "001 TTRPG System/Core Stats/Point Buy System/Point Buy Samples",
+    "001 TTRPG System/Core Stats/Core Stat Attributes",
+    "001 TTRPG System/Core Stats/Point Buy System",
+    "001 TTRPG System/Core Stats",
+    "001 TTRPG System",
+    "Miscellaneous Topics",
     "Welcome.md"
   ]
 }
