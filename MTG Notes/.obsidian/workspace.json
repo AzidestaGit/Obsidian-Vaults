@@ -185,11 +185,24 @@
       "canvas:Create new canvas": false,
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
-      "command-palette:Open command palette": false
+      "command-palette:Open command palette": false,
+      "obsidian-git:Open Git source control": false
     }
   },
   "active": "249f8d2d31ec0ed0",
   "lastOpenFiles": [
+    "Core Stats/Point Buy System/Recommended Point Buy Tiers.md",
+    "Core Stats/Point Buy System/Point Buy System.md",
+    "Core Stats/Point Buy System/Point Buy Samples",
+    "Core Stats/Point Buy System",
+    "Core Stats/Mind.md",
+    "Core Stats/Body.md",
+    "Core Stats/Soul.md",
+    "Core Stats/Core Stat Attributes/Spark.md",
+    "Core Stats/Core Stat Attributes/Pulse.md",
+    "Core Stats/Core Stat Attributes/Thread.md",
+    "Core Stats/Core Stat Attributes",
+    "Core Stats",
     "Card Collection.md",
     "Card Wishlists/MTGA Wishlist.md.md",
     "create a link.md",
