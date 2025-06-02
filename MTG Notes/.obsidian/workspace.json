@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Card Wishlists/MTGA Wishlist.md.md",
+                "file": "002 MTG Arena/Card Wishlists/MTGA Wishlist.md.md",
                 "mode": "source",
                 "source": true
               },
@@ -33,12 +33,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Card Wishlists/MTGA Wishlist.md.md",
+                "file": "002 MTG Arena/Card Collection.md",
                 "mode": "preview",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "MTGA Wishlist.md"
+              "title": "Card Collection"
             }
           }
         ]
@@ -189,24 +189,28 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "249f8d2d31ec0ed0",
+  "active": "3605d43b5efc52fc",
   "lastOpenFiles": [
-    "Core Stats/Point Buy System/Recommended Point Buy Tiers.md",
-    "Core Stats/Point Buy System/Point Buy System.md",
-    "Core Stats/Point Buy System/Point Buy Samples",
-    "Core Stats/Point Buy System",
-    "Core Stats/Mind.md",
-    "Core Stats/Body.md",
-    "Core Stats/Soul.md",
-    "Core Stats/Core Stat Attributes/Spark.md",
-    "Core Stats/Core Stat Attributes/Pulse.md",
-    "Core Stats/Core Stat Attributes/Thread.md",
-    "Core Stats/Core Stat Attributes",
-    "Core Stats",
-    "Card Collection.md",
-    "Card Wishlists/MTGA Wishlist.md.md",
+    "Miscellaneous Topics",
+    "002 MTG Arena/Card Collection.md",
+    "003 New AI Chatbot",
+    "002 MTG Arena",
+    "002 MTG Arena/Card Wishlists/MTGA Wishlist.md.md",
+    "001 TTRPG System",
+    "001 TTRPG System/Core Stats/Point Buy System/Recommended Point Buy Tiers.md",
+    "001 TTRPG System/Core Stats/Point Buy System/Point Buy System.md",
+    "001 TTRPG System/Core Stats/Point Buy System/Point Buy Samples",
+    "001 TTRPG System/Core Stats/Point Buy System",
+    "001 TTRPG System/Core Stats/Mind.md",
+    "001 TTRPG System/Core Stats/Body.md",
+    "001 TTRPG System/Core Stats/Soul.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Spark.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Pulse.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Thread.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes",
+    "001 TTRPG System/Core Stats",
     "create a link.md",
     "Welcome.md",
-    "Card Wishlists"
+    "002 MTG Arena/Card Wishlists"
   ]
 }
