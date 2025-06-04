@@ -1,17 +1,14 @@
 import os
+import glob
 import json
-import time
 import uuid
 import hashlib
-from pathlib import Path
-from datetime import datetime
-
 from dotenv import load_dotenv
+from datetime import datetime
 from supabase import create_client
-import tiktoken
-import openai
+from openai import OpenAI
 
-# === Load environment variables ===
+# Load environment variables
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -19,115 +16,124 @@ SUPABASE_TABLE = os.getenv("SUPABASE_TABLE")
 NOTES_FOLDER = os.getenv("NOTES_FOLDER")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# === Initialize clients ===
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-openai.api_key = OPENAI_API_KEY
-tokenizer = tiktoken.encoding_for_model("text-embedding-3-small")
+openai = OpenAI(api_key=OPENAI_API_KEY)
 
-# === Local state cache ===
-INDEX_FILE = ".vault_index.json"
-if Path(INDEX_FILE).exists():
+INDEX_FILE = "vault_index.json"
+
+# Load or initialize the local index
+if os.path.exists(INDEX_FILE):
     with open(INDEX_FILE, "r", encoding="utf-8") as f:
         local_index = json.load(f)
 else:
     local_index = {}
 
-# === Helper: collapse long array in logs ===
-def summarize_payload(payload):
-    summarized = payload.copy()
-    if "embedding" in summarized:
-        summarized["embedding"] = f"[{len(summarized['embedding'])} floats]"
-    return summarized
+def normalize_path(path):
+    return os.path.normpath(path).replace("\\", "/")
 
-# === Helper: hash content for change tracking ===
+def get_embedding(text):
+    response = openai.embeddings.create(
+        input=[text],
+        model="text-embedding-3-small"
+    )
+    return response.data[0].embedding
+
 def hash_text(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-# === Helper: split file into overlapping chunks ===
-def chunk_text(text, max_tokens=500, overlap=50):
-    tokens = tokenizer.encode(text)
-    chunks = []
-    start = 0
-    while start < len(tokens):
-        chunk = tokenizer.decode(tokens[start:start+max_tokens])
-        chunks.append(chunk)
-        start += max_tokens - overlap
-    return chunks or [""]  # Even empty files give one blank chunk
-
-# === Generate vector embedding ===
-def get_embedding(text):
-    response = openai.embeddings.create(input=[text], model="text-embedding-3-small")
-    return response.data[0].embedding
-
-# === Sync a single file ===
 def sync_file(filepath):
-    filepath = str(Path(filepath).resolve())
-    title = Path(filepath).stem
+    normalized_path = normalize_path(filepath)
+    filename = os.path.basename(filepath)
+    title = os.path.splitext(filename)[0]
+    uuid_entry = local_index.get(normalized_path)
 
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read().strip()
 
-    content_hash = hash_text(content)
-    if local_index.get(filepath, {}).get("hash") == content_hash:
-        return  # No change
+    # Set default hash if file is empty
+    content_hash = hash_text(content) if content else ""
+    embedding = get_embedding(content) if content else None
 
-    chunks = chunk_text(content)
-    archived = False
+    # If this file has been seen before, update it
+    if uuid_entry:
+        existing = supabase.table(SUPABASE_TABLE).select("*").eq("id", uuid_entry["id"]).execute().data
+        if existing:
+            record = existing[0]
+            updates = {}
+            changes = []
 
-    for i, chunk in enumerate(chunks):
-        embedding = get_embedding(chunk) if chunk else None
-        embedding_list = list(embedding) if embedding else None
+            if record["filepath"] != normalized_path:
+                updates["filepath"] = normalized_path
+                changes.append(f"filepath: [{record['filepath']}] → [{normalized_path}]")
+            if record["title"] != title:
+                updates["title"] = title
+                changes.append(f"title: [{record['title']}] → [{title}]")
+            if content_hash != uuid_entry.get("content_hash"):
+                updates["content"] = content
+                updates["embedding"] = embedding if embedding else None
+                changes.append("content: updated")
+                if embedding:
+                    changes.append(f"embedding: updated ({len(embedding)} floats)")
 
+            if updates:
+                supabase.table(SUPABASE_TABLE).update(updates).eq("id", record["id"]).execute()
+                print(f"✏️ Updated ({normalized_path}):")
+                for c in changes:
+                    print(f"  - {c}")
+                # Update local index
+                uuid_entry["content_hash"] = content_hash
+                uuid_entry["filepath"] = normalized_path
+                uuid_entry["title"] = title
+            else:
+                print(f"✅ No changes: {normalized_path}")
+        else:
+            print(f"⚠️ UUID exists but Supabase row not found for: {normalized_path}")
+    else:
+        # Insert new record
+        uid = str(uuid.uuid4())
         payload = {
-            "filepath": filepath,
+            "id": uid,
+            "filepath": normalized_path,
             "title": title,
-            "content": chunk,
-            "embedding": embedding_list,
-            "archived": archived
+            "content": content,
+            "embedding": embedding if embedding else None,
+            "archived": False
+        }
+        supabase.table(SUPABASE_TABLE).insert(payload).execute()
+        print(f"🆕 Inserted: {normalized_path}")
+        local_index[normalized_path] = {
+            "id": uid,
+            "filepath": normalized_path,
+            "title": title,
+            "content_hash": content_hash
         }
 
-        existing = supabase.table(SUPABASE_TABLE).select("id").eq("filepath", filepath).execute().data
-        try:
-            if existing:
-                payload["id"] = existing[0]["id"]
-                print(f"🔁 Updating: {title}")
-                supabase.table(SUPABASE_TABLE).update(payload).eq("id", payload["id"]).execute()
-            else:
-                payload["id"] = str(uuid.uuid4())
-                print(f"🆕 Inserting: {title}")
-                supabase.table(SUPABASE_TABLE).insert(payload).execute()
-        except Exception as e:
-            print(f"🔥 Supabase APIError while syncing: {filepath}")
-            print("Payload:")
-            print(json.dumps(summarize_payload(payload), indent=2))
-            print(f"Error: {e}")
-
-    local_index[filepath] = {"hash": content_hash, "timestamp": datetime.now().isoformat()}
-
-# === Archive deleted files ===
 def archive_deleted_files():
-    current_files = {str(p.resolve()) for p in Path(NOTES_FOLDER).rglob("*.md")}
-    indexed_files = set(local_index.keys())
-    deleted_files = indexed_files - current_files
+    current_paths = set(normalize_path(f) for f in glob.glob(f"{NOTES_FOLDER}/**/*.md", recursive=True))
+    archived_any = False
 
-    for path in deleted_files:
-        existing = supabase.table(SUPABASE_TABLE).select("id").eq("filepath", path).execute().data
-        if existing:
+    for path in list(local_index.keys()):
+        if path not in current_paths:
+            uid = local_index[path]["id"]
             try:
-                print(f"📦 Archiving (missing): {path}")
-                supabase.table(SUPABASE_TABLE).update({"archived": True}).eq("id", existing[0]["id"]).execute()
-                local_index[path]["archived"] = True
+                supabase.table(SUPABASE_TABLE).update({"archived": True}).eq("id", uid).execute()
+                print(f"📦 Archived (missing): {path}")
+                del local_index[path]
+                archived_any = True
             except Exception as e:
-                print(f"🔥 Archive error: {path}")
-                print(f"Error: {e}")
+                print(f"🔥 Supabase APIError while archiving: {path}\n{e}")
+    if not archived_any:
+        print("✅ No files to archive.")
 
-# === Main Sync ===
-for file_path in Path(NOTES_FOLDER).rglob("*.md"):
-    sync_file(file_path)
+def sync_all():
+    print(f"🔄 Sync started at {datetime.now().strftime('%H:%M:%S')}...\n")
+    files = glob.glob(f"{NOTES_FOLDER}/**/*.md", recursive=True)
+    for file_path in files:
+        sync_file(file_path)
+    archive_deleted_files()
+    with open(INDEX_FILE, "w", encoding="utf-8") as f:
+        json.dump(local_index, f, indent=2)
+    print("\n✅ Vault sync complete.")
 
-archive_deleted_files()
-
-with open(INDEX_FILE, "w", encoding="utf-8") as f:
-    json.dump(local_index, f, indent=2)
-
-print("✅ Smart sync complete.")
+if __name__ == "__main__":
+    sync_all()
