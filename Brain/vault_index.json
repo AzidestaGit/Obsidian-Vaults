@@ -85,5 +85,71 @@
     "filepath": "C:/ObsidianVaults/MasterVault/001 TTRPG System/Core Stats/Core Stat Attributes/Point Buy System/Recommended Point Buy Tiers.md",
     "title": "Recommended Point Buy Tiers",
     "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "713147bc-a177-4889-9a2c-4f30cb2bc887": {
+    "id": "713147bc-a177-4889-9a2c-4f30cb2bc887",
+    "filepath": "Welcome.md",
+    "title": "Welcome",
+    "content_hash": "ecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8"
+  },
+  "dc51d660-985d-42fd-83b1-2887fed0a219": {
+    "id": "dc51d660-985d-42fd-83b1-2887fed0a219",
+    "filepath": "001 TTRPG System/Core Stats/Body.md",
+    "title": "Body",
+    "content_hash": "2acbfb067264e70ece5ad31491113edaa85267a76e562fd2f6eb58a9aaf08838"
+  },
+  "e235e4a2-e30d-41c1-a3d0-5b1e6e39694c": {
+    "id": "e235e4a2-e30d-41c1-a3d0-5b1e6e39694c",
+    "filepath": "001 TTRPG System/Core Stats/Mind.md",
+    "title": "Mind",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "caa7d69a-1023-4e9a-bf67-9c5c8ef7e57d": {
+    "id": "caa7d69a-1023-4e9a-bf67-9c5c8ef7e57d",
+    "filepath": "001 TTRPG System/Core Stats/Soul.md",
+    "title": "Soul",
+    "content_hash": "18c52fac215a52fe9e0c667b5861337acefcbb336cde63ae7a56dfcaebcbfeab"
+  },
+  "d12ad1af-c9b1-4c92-8064-d5c6ff481cce": {
+    "id": "d12ad1af-c9b1-4c92-8064-d5c6ff481cce",
+    "filepath": "001 TTRPG System/Core Stats/Core Stat Attributes/Pulse.md",
+    "title": "Pulse",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "c06e8ca2-68e1-4656-8e9c-fa62625a14f1": {
+    "id": "c06e8ca2-68e1-4656-8e9c-fa62625a14f1",
+    "filepath": "001 TTRPG System/Core Stats/Core Stat Attributes/Spark.md",
+    "title": "Spark",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "b795045d-05ae-4c9c-82ee-7037374df443": {
+    "id": "b795045d-05ae-4c9c-82ee-7037374df443",
+    "filepath": "001 TTRPG System/Core Stats/Core Stat Attributes/Thread.md",
+    "title": "Thread",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "b8eeb0f9-07bc-44b8-a1d5-be571cbc75ea": {
+    "id": "b8eeb0f9-07bc-44b8-a1d5-be571cbc75ea",
+    "filepath": "001 TTRPG System/Core Stats/Point Buy System/Point Buy System.md",
+    "title": "Point Buy System",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "54e639a5-3456-45c0-b4a7-d16481bb58b0": {
+    "id": "54e639a5-3456-45c0-b4a7-d16481bb58b0",
+    "filepath": "001 TTRPG System/Core Stats/Core Stat Attributes/Point Buy System/Recommended Point Buy Tiers.md",
+    "title": "Recommended Point Buy Tiers",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "06933a86-d2fe-4219-a5f5-5e3a66074646": {
+    "id": "06933a86-d2fe-4219-a5f5-5e3a66074646",
+    "filepath": "002 MTG Arena/Card Wishlists/MTGA Wishlist.md",
+    "title": "MTGA Wishlist",
+    "content_hash": "259e57016bc68c87c08c3a47f62fa4d7042649d3e2443cb8b15e7888dbe27ce0"
+  },
+  "cff8f52d-fb20-489b-af6d-11650fa3d395": {
+    "id": "cff8f52d-fb20-489b-af6d-11650fa3d395",
+    "filepath": "Miscellaneous Topics/Personal Matrix Table.md",
+    "title": "Personal Matrix Table",
+    "content_hash": "90d47669c27a835d09f7ed75097160badff1bc898d4f54ae885ccddc569dc145"
   }
 }

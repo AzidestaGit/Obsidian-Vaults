@@ -17,4 +17,4 @@ uuid: 06933a86-d2fe-4219-a5f5-5e3a66074646
 
 
 # Mythics
-This is a Git push test
+This is a python script test. hope this fucking works.
