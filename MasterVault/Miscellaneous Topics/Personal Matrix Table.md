@@ -1,3 +1,7 @@
+---
+uuid: cff8f52d-fb20-489b-af6d-11650fa3d395
+---
+
 One my workbook I have primary sheet named "Matrix". on that sheet I have a table named "Matrix". Here is the structure of that table:
 |Order               |CELL_CODE    |CREATIVE_FILE_NAME|FROM_PICKUP|DYNAMIC_CONTENT|SUBJECT   |PREVIEW_TEXT|TFN                 |LOGO_URL       |CTA_URL         |FOOTER   |
 |-----------------------|-----------------------|-------------------------------------|------------------------|----------------------------------|-----------------|--------------------------|-----------------------|------------------------|------------------------|----------------|

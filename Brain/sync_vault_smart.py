@@ -1,145 +1,151 @@
 # sync_vault_smart.py
-import os, json, uuid, hashlib
-from datetime import datetime
+
+import os
+import glob
+import json
+import uuid
+import hashlib
+import openai
+import tiktoken
+import frontmatter
 from supabase import create_client
 from dotenv import load_dotenv
-import openai, tiktoken
+from datetime import datetime
 
-# Load config
+# Load environment variables
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 SUPABASE_TABLE = os.getenv("SUPABASE_TABLE")
 NOTES_FOLDER = os.getenv("NOTES_FOLDER")
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-tokenizer = tiktoken.encoding_for_model("text-embedding-3-small")
 INDEX_FILE = "vault_index.json"
 
-# Load or initialize index
+# Initialize Supabase and OpenAI
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+openai.api_key = os.getenv("OPENAI_API_KEY")
+tokenizer = tiktoken.encoding_for_model("text-embedding-3-small")
+
+# Load or initialize local index
 if os.path.exists(INDEX_FILE):
     with open(INDEX_FILE, "r", encoding="utf-8") as f:
-        try:
-            vault_index = json.load(f)
-        except json.JSONDecodeError:
-            vault_index = {}
+        local_index = json.load(f)
 else:
-    vault_index = {}
+    local_index = {}
 
-def chunk_text(text, max_tokens=500, overlap=50):
-    tokens = tokenizer.encode(text)
-    chunks = []
-    start = 0
-    while start < len(tokens):
-        end = start + max_tokens
-        chunk = tokenizer.decode(tokens[start:end])
-        chunks.append(chunk)
-        start += max_tokens - overlap
-    return chunks
+def normalize_path(path):
+    return os.path.normpath(path).replace("\\", "/")
+
+def get_hash(content):
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 def get_embedding(text):
-    return list(openai.embeddings.create(input=[text], model="text-embedding-3-small").data[0].embedding)
+    response = openai.embeddings.create(
+        input=[text],
+        model="text-embedding-3-small"
+    )
+    return list(response.data[0].embedding)
 
-def compute_hash(text):
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+def get_or_set_uuid(filepath):
+    with open(filepath, "r", encoding="utf-8") as f:
+        post = frontmatter.load(f)
+        file_uuid = post.get("uuid")
+
+    if file_uuid:
+        return file_uuid
+
+    new_uuid = str(uuid.uuid4())
+    post["uuid"] = new_uuid
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(frontmatter.dumps(post))
+
+    return new_uuid
 
 def sync_file(filepath):
-    rel_path = filepath.replace("\\", "/")
-    title = os.path.splitext(os.path.basename(filepath))[0]
+    filepath = normalize_path(filepath)
+    file_uuid = get_or_set_uuid(filepath)
 
     with open(filepath, "r", encoding="utf-8") as f:
-        content = f.read().strip()
+        post = frontmatter.load(f)
+        content = post.content.strip()
+        title = os.path.splitext(os.path.basename(filepath))[0]
+        content_hash = get_hash(content)
 
-    content_hash = compute_hash(content)
-    is_blank = not content
+    response = supabase.table(SUPABASE_TABLE).select("*").eq("id", file_uuid).execute()
+    supa_rows = response.data
 
-    local = vault_index.get(rel_path)
-    if isinstance(local, dict):
-        file_uuid = local["id"]
-    else:
-        file_uuid = local if isinstance(local, str) else str(uuid.uuid4())
-
-    supa_result = supabase.table(SUPABASE_TABLE).select("*").eq("id", file_uuid).execute().data
-    is_new = not bool(supa_result)
+    embedding = get_embedding(content) if content else None
 
     payload = {
         "id": file_uuid,
-        "filepath": rel_path,
+        "filepath": filepath,
         "title": title,
-        "content": content if not is_blank else None,
-        "embedding": get_embedding(content) if not is_blank else None,
-        "archived": False
+        "content": content if content else None,
+        "embedding": embedding,
+        "archived": False,
+        "content_hash": content_hash
     }
 
-    if is_new:
-        try:
-            supabase.table(SUPABASE_TABLE).insert(payload).execute()
-            print(f"🆕 Inserted: {rel_path}")
-        except Exception as e:
-            print(f"🔥 Supabase insert error: {rel_path}\n{e}")
+    if not supa_rows:
+        supabase.table(SUPABASE_TABLE).insert(payload).execute()
+        print(f"🆕 Inserted: {filepath}")
     else:
-        existing = supa_result[0]
-        updates = {}
-        logs = []
+        supa_row = supa_rows[0]
+        update_fields = {}
 
-        if existing["filepath"] != rel_path:
-            updates["filepath"] = rel_path
-            logs.append(f"  • filepath: {existing['filepath']} → {rel_path}")
-        if existing["title"] != title:
-            updates["title"] = title
-            logs.append(f"  • title: {existing['title']} → {title}")
-        if not is_blank and compute_hash(existing.get("content", "")) != content_hash:
-            updates["content"] = content
-            updates["embedding"] = payload["embedding"]
-            logs.append("  • content updated")
+        if normalize_path(supa_row["filepath"]) != filepath:
+            update_fields["filepath"] = filepath
+        if supa_row["title"] != title:
+            update_fields["title"] = title
+        if supa_row.get("content_hash") != content_hash:
+            update_fields["content"] = content
+            update_fields["embedding"] = embedding
+            update_fields["content_hash"] = content_hash
+        if supa_row["archived"]:
+            update_fields["archived"] = False
 
-        if updates:
-            try:
-                supabase.table(SUPABASE_TABLE).update(updates).eq("id", file_uuid).execute()
-                print(f"🔁 Updated: {rel_path}")
-                for line in logs:
-                    print(line)
-            except Exception as e:
-                print(f"🔥 Supabase update error: {rel_path}\n{e}")
-        else:
-            print(f"✅ No changes for: {rel_path}")
+        if update_fields:
+            supabase.table(SUPABASE_TABLE).update(update_fields).eq("id", file_uuid).execute()
+            print(f"✏️ Updated: {filepath}")
+            for k, v in update_fields.items():
+                if k == "content":
+                    print("  ↪ content updated")
+                elif k == "embedding":
+                    print("  ↪ embedding updated")
+                else:
+                    print(f"  ↪ {k}: {supa_row.get(k, 'N/A')} → {v}")
 
-    vault_index[rel_path] = {
+    local_index[file_uuid] = {
         "id": file_uuid,
-        "filepath": rel_path,
+        "filepath": filepath,
         "title": title,
         "content_hash": content_hash
     }
 
-# Main sync
+# Start sync
 print(f"🔄 Sync started at {datetime.now().strftime('%H:%M:%S')}...\n")
-all_files = []
-for root, dirs, files in os.walk(NOTES_FOLDER):
-    for f in files:
-        if f.endswith(".md"):
-            all_files.append(os.path.join(root, f))
 
-existing_paths = set(vault_index.keys())
-current_paths = set(path.replace("\\", "/") for path in all_files)
+all_filepaths = glob.glob(f"{NOTES_FOLDER}/**/*.md", recursive=True)
+all_filepaths = [normalize_path(p) for p in all_filepaths]
 
-for file_path in all_files:
+for file_path in all_filepaths:
     try:
         sync_file(file_path)
     except Exception as e:
-        print(f"🔥 Unexpected error during sync: {file_path}\n{e}")
+        print(f"🔥 Error while syncing: {file_path}\n{e}")
 
-deleted_paths = existing_paths - current_paths
-for path in deleted_paths:
-    record = vault_index[path]
-    file_uuid = record["id"] if isinstance(record, dict) else record
-    try:
-        supabase.table(SUPABASE_TABLE).update({"archived": True}).eq("id", file_uuid).execute()
-        print(f"📦 Archived (missing): {path}")
-        vault_index[path]["archived"] = True
-    except Exception as e:
-        print(f"🔥 Supabase archive error: {path}\n{e}")
+# Archive files missing from disk
+live_paths = set(all_filepaths)
+for uuid_key, meta in local_index.items():
+    saved_path = normalize_path(meta["filepath"])
+    if saved_path not in live_paths:
+        try:
+            supabase.table(SUPABASE_TABLE).update({"archived": True}).eq("id", uuid_key).execute()
+            print(f"📦 Archived (missing): {saved_path}")
+        except Exception as e:
+            print(f"🔥 Archive error: {saved_path}\n{e}")
 
 with open(INDEX_FILE, "w", encoding="utf-8") as f:
-    json.dump(vault_index, f, indent=2)
+    json.dump(local_index, f, indent=2)
 
 print("\n✅ Vault sync complete.")
