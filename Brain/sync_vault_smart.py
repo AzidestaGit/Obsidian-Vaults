@@ -10,11 +10,11 @@ from supabase import create_client
 from sentence_transformers import SentenceTransformer
 from postgrest.exceptions import APIError
 
-# Load .env config
+# Load environment variables
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-NOTES_FOLDER = os.getenv("NOTES_FOLDER").replace("\\", "/")
+NOTES_FOLDER = os.getenv("NOTES_FOLDER")
 TABLE_NAME = os.getenv("SUPABASE_TABLE")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -30,21 +30,24 @@ else:
 
 # Helpers
 def normalize_path(p):
-    return os.path.abspath(p).replace("\\", "/")
+    return str(Path(p).resolve().as_posix())
 
 def get_hash(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-def safe_execute(callable_func, payload, file_path):
+def safe_execute(call, payload, file_path, stage="insert", fail_if_missing=False):
     try:
-        callable_func.execute()
+        call.execute()
     except APIError as e:
-        print(f"\n🔥 Supabase APIError while syncing: {file_path}")
-        print(f"Payload:\n{json.dumps(payload, indent=2)}")
+        print(f"\n🔥 Supabase APIError during {stage}: {file_path}")
+        print(f"Payload:\n{json.dumps(payload, indent=2)[:2000]}... [truncated]")
         print(f"Error: {e}")
+        if fail_if_missing and file_path in local_index:
+            del local_index[file_path]
+            print(f"🧹 Removed from index: {file_path}")
     except Exception as e:
-        print(f"\n💥 Unexpected error on: {file_path}")
-        print(f"Payload:\n{json.dumps(payload, indent=2)}")
+        print(f"\n💥 Unexpected error during {stage}: {file_path}")
+        print(f"Payload:\n{json.dumps(payload, indent=2)[:2000]}... [truncated]")
         print(f"Error: {e}")
 
 def sync_file(full_path):
@@ -54,12 +57,9 @@ def sync_file(full_path):
     with open(full_path, "r", encoding="utf-8") as f:
         content = f.read().strip()
 
+    content = content or ""
     content_hash = get_hash(content)
     embedding = model.encode(content).tolist() if content else None
-
-    # Ensure content is never None
-    if content is None:
-        content = ""
 
     if full_path in local_index:
         file_record = local_index[full_path]
@@ -71,7 +71,7 @@ def sync_file(full_path):
                 "title": title,
                 "archived": False
             }
-            safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, full_path)
+            safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, full_path, "rename/move")
             print(f"🔄 Moved/renamed: {full_path}")
         else:
             payload = {
@@ -80,10 +80,12 @@ def sync_file(full_path):
                 "content": content,
                 "archived": False
             }
-            if embedding is not None:
-                payload["embedding"] = embedding
+            safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, full_path, "update-meta")
 
-            safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, full_path)
+            if embedding is not None:
+                emb_payload = {"embedding": embedding}
+                safe_execute(supabase.table(TABLE_NAME).update(emb_payload).eq("id", file_id), emb_payload, full_path, "update-embedding")
+
             print(f"✏️ Updated: {full_path}")
 
         local_index[full_path]["hash"] = content_hash
@@ -97,10 +99,13 @@ def sync_file(full_path):
             "content": content,
             "archived": False
         }
-        if embedding is not None:
-            payload["embedding"] = embedding
 
-        safe_execute(supabase.table(TABLE_NAME).insert(payload), payload, full_path)
+        safe_execute(supabase.table(TABLE_NAME).insert(payload), payload, full_path, "insert")
+
+        if embedding is not None:
+            emb_payload = {"embedding": embedding}
+            safe_execute(supabase.table(TABLE_NAME).update(emb_payload).eq("id", file_id), emb_payload, full_path, "embed-on-insert")
+
         local_index[full_path] = {
             "id": file_id,
             "hash": content_hash
@@ -115,16 +120,16 @@ for file_path in glob.glob(f"{NOTES_FOLDER}/**/*.md", recursive=True):
     sync_file(full_path)
     seen_paths.add(full_path)
 
-# Archive missing files
-missing_paths = [path for path in local_index if path not in seen_paths]
+# Archive deleted files
+missing_paths = [path for path in list(local_index) if path not in seen_paths]
 
 for missing in missing_paths:
     file_id = local_index[missing]["id"]
     payload = {"archived": True}
-    safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, missing)
+    safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, missing, "archive", fail_if_missing=True)
     print(f"📦 Archived (missing): {missing}")
 
-# Save local index
+# Save index
 with open(index_path, "w", encoding="utf-8") as f:
     json.dump(local_index, f, indent=2)
 
