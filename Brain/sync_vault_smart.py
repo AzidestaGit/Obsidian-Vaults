@@ -1,136 +1,133 @@
 import os
-import glob
 import json
+import time
 import uuid
 import hashlib
 from pathlib import Path
+from datetime import datetime
 
 from dotenv import load_dotenv
 from supabase import create_client
-from sentence_transformers import SentenceTransformer
-from postgrest.exceptions import APIError
+import tiktoken
+import openai
 
-# Load environment variables
+# === Load environment variables ===
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_TABLE = os.getenv("SUPABASE_TABLE")
 NOTES_FOLDER = os.getenv("NOTES_FOLDER")
-TABLE_NAME = os.getenv("SUPABASE_TABLE")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# === Initialize clients ===
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-model = SentenceTransformer("all-MiniLM-L6-v2")
-index_path = Path(".vault_index.json")
+openai.api_key = OPENAI_API_KEY
+tokenizer = tiktoken.encoding_for_model("text-embedding-3-small")
 
-# Load or create local index
-if index_path.exists():
-    with open(index_path, "r", encoding="utf-8") as f:
+# === Local state cache ===
+INDEX_FILE = ".vault_index.json"
+if Path(INDEX_FILE).exists():
+    with open(INDEX_FILE, "r", encoding="utf-8") as f:
         local_index = json.load(f)
 else:
     local_index = {}
 
-# Helpers
-def normalize_path(p):
-    return str(Path(p).resolve().as_posix())
+# === Helper: collapse long array in logs ===
+def summarize_payload(payload):
+    summarized = payload.copy()
+    if "embedding" in summarized:
+        summarized["embedding"] = f"[{len(summarized['embedding'])} floats]"
+    return summarized
 
-def get_hash(text):
+# === Helper: hash content for change tracking ===
+def hash_text(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-def safe_execute(call, payload, file_path, stage="insert", fail_if_missing=False):
-    try:
-        call.execute()
-    except APIError as e:
-        print(f"\n🔥 Supabase APIError during {stage}: {file_path}")
-        print(f"Payload:\n{json.dumps(payload, indent=2)[:2000]}... [truncated]")
-        print(f"Error: {e}")
-        if fail_if_missing and file_path in local_index:
-            del local_index[file_path]
-            print(f"🧹 Removed from index: {file_path}")
-    except Exception as e:
-        print(f"\n💥 Unexpected error during {stage}: {file_path}")
-        print(f"Payload:\n{json.dumps(payload, indent=2)[:2000]}... [truncated]")
-        print(f"Error: {e}")
+# === Helper: split file into overlapping chunks ===
+def chunk_text(text, max_tokens=500, overlap=50):
+    tokens = tokenizer.encode(text)
+    chunks = []
+    start = 0
+    while start < len(tokens):
+        chunk = tokenizer.decode(tokens[start:start+max_tokens])
+        chunks.append(chunk)
+        start += max_tokens - overlap
+    return chunks or [""]  # Even empty files give one blank chunk
 
-def sync_file(full_path):
-    full_path = normalize_path(full_path)
-    title = os.path.splitext(os.path.basename(full_path))[0]
+# === Generate vector embedding ===
+def get_embedding(text):
+    response = openai.embeddings.create(input=[text], model="text-embedding-3-small")
+    return response.data[0].embedding
 
-    with open(full_path, "r", encoding="utf-8") as f:
+# === Sync a single file ===
+def sync_file(filepath):
+    filepath = str(Path(filepath).resolve())
+    title = Path(filepath).stem
+
+    with open(filepath, "r", encoding="utf-8") as f:
         content = f.read().strip()
 
-    content = content or ""
-    content_hash = get_hash(content)
-    embedding = model.encode(content).tolist() if content else None
+    content_hash = hash_text(content)
+    if local_index.get(filepath, {}).get("hash") == content_hash:
+        return  # No change
 
-    if full_path in local_index:
-        file_record = local_index[full_path]
-        file_id = file_record["id"]
+    chunks = chunk_text(content)
+    archived = False
 
-        if file_record["hash"] == content_hash:
-            payload = {
-                "filepath": full_path,
-                "title": title,
-                "archived": False
-            }
-            safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, full_path, "rename/move")
-            print(f"🔄 Moved/renamed: {full_path}")
-        else:
-            payload = {
-                "filepath": full_path,
-                "title": title,
-                "content": content,
-                "archived": False
-            }
-            safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, full_path, "update-meta")
+    for i, chunk in enumerate(chunks):
+        embedding = get_embedding(chunk) if chunk else None
+        embedding_list = list(embedding) if embedding else None
 
-            if embedding is not None:
-                emb_payload = {"embedding": embedding}
-                safe_execute(supabase.table(TABLE_NAME).update(emb_payload).eq("id", file_id), emb_payload, full_path, "update-embedding")
-
-            print(f"✏️ Updated: {full_path}")
-
-        local_index[full_path]["hash"] = content_hash
-
-    else:
-        file_id = str(uuid.uuid4())
         payload = {
-            "id": file_id,
-            "filepath": full_path,
+            "filepath": filepath,
             "title": title,
-            "content": content,
-            "archived": False
+            "content": chunk,
+            "embedding": embedding_list,
+            "archived": archived
         }
 
-        safe_execute(supabase.table(TABLE_NAME).insert(payload), payload, full_path, "insert")
+        existing = supabase.table(SUPABASE_TABLE).select("id").eq("filepath", filepath).execute().data
+        try:
+            if existing:
+                payload["id"] = existing[0]["id"]
+                print(f"🔁 Updating: {title}")
+                supabase.table(SUPABASE_TABLE).update(payload).eq("id", payload["id"]).execute()
+            else:
+                payload["id"] = str(uuid.uuid4())
+                print(f"🆕 Inserting: {title}")
+                supabase.table(SUPABASE_TABLE).insert(payload).execute()
+        except Exception as e:
+            print(f"🔥 Supabase APIError while syncing: {filepath}")
+            print("Payload:")
+            print(json.dumps(summarize_payload(payload), indent=2))
+            print(f"Error: {e}")
 
-        if embedding is not None:
-            emb_payload = {"embedding": embedding}
-            safe_execute(supabase.table(TABLE_NAME).update(emb_payload).eq("id", file_id), emb_payload, full_path, "embed-on-insert")
+    local_index[filepath] = {"hash": content_hash, "timestamp": datetime.now().isoformat()}
 
-        local_index[full_path] = {
-            "id": file_id,
-            "hash": content_hash
-        }
-        print(f"🆕 Inserted: {full_path}")
+# === Archive deleted files ===
+def archive_deleted_files():
+    current_files = {str(p.resolve()) for p in Path(NOTES_FOLDER).rglob("*.md")}
+    indexed_files = set(local_index.keys())
+    deleted_files = indexed_files - current_files
 
-# Main sync loop
-seen_paths = set()
+    for path in deleted_files:
+        existing = supabase.table(SUPABASE_TABLE).select("id").eq("filepath", path).execute().data
+        if existing:
+            try:
+                print(f"📦 Archiving (missing): {path}")
+                supabase.table(SUPABASE_TABLE).update({"archived": True}).eq("id", existing[0]["id"]).execute()
+                local_index[path]["archived"] = True
+            except Exception as e:
+                print(f"🔥 Archive error: {path}")
+                print(f"Error: {e}")
 
-for file_path in glob.glob(f"{NOTES_FOLDER}/**/*.md", recursive=True):
-    full_path = normalize_path(file_path)
-    sync_file(full_path)
-    seen_paths.add(full_path)
+# === Main Sync ===
+for file_path in Path(NOTES_FOLDER).rglob("*.md"):
+    sync_file(file_path)
 
-# Archive deleted files
-missing_paths = [path for path in list(local_index) if path not in seen_paths]
+archive_deleted_files()
 
-for missing in missing_paths:
-    file_id = local_index[missing]["id"]
-    payload = {"archived": True}
-    safe_execute(supabase.table(TABLE_NAME).update(payload).eq("id", file_id), payload, missing, "archive", fail_if_missing=True)
-    print(f"📦 Archived (missing): {missing}")
-
-# Save index
-with open(index_path, "w", encoding="utf-8") as f:
+with open(INDEX_FILE, "w", encoding="utf-8") as f:
     json.dump(local_index, f, indent=2)
 
-print("✅ Smart vault sync complete.")
+print("✅ Smart sync complete.")

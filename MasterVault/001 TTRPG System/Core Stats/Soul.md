@@ -1,1 +1,1 @@
-Anything mystical or unexplainable. This is a sink test
+Anything mystical or unexplainable.

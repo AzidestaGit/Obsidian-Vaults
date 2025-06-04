@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "001 TTRPG System/Core Stats/Soul.md",
+                "file": "Miscellaneous Topics/Test File.md",
                 "mode": "source",
                 "source": true
               },
               "icon": "lucide-file",
-              "title": "Soul"
+              "title": "Test File"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "001 TTRPG System/Core Stats/Soul.md",
+                "file": "Miscellaneous Topics/Test File.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Soul"
+              "title": "Backlinks for Test File"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "001 TTRPG System/Core Stats/Soul.md",
+                "file": "Miscellaneous Topics/Test File.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Soul"
+              "title": "Outgoing links from Test File"
             }
           },
           {
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "001 TTRPG System/Core Stats/Soul.md",
+                "file": "Miscellaneous Topics/Test File.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Soul"
+              "title": "Outline of Test File"
             }
           }
         ]
@@ -171,24 +171,25 @@
   },
   "active": "973379fc8b7907aa",
   "lastOpenFiles": [
-    "Personal Matrix Table.md",
+    "001 TTRPG System/Core Stats/Soul.md",
+    "Miscellaneous Topics/Test File.md",
+    "002 MTG Arena/Card Collection.md",
+    "Miscellaneous Topics/Personal Matrix Table.md",
     "002 MTG Arena/Card Wishlists/MTGA Wishlist.md",
     "001 TTRPG System/Core Stats/Mind.md",
     "001 TTRPG System/Core Stats/Body.md",
     "003 New AI Chatbot",
     "002 MTG Arena/Card Wishlists/MTGA Wishlist.md.md",
-    "002 MTG Arena/Card Collection.md",
     "002 MTG Arena/Card Wishlists",
     "002 MTG Arena",
-    "001 TTRPG System/Core Stats/Point Buy System/Recommended Point Buy Tiers.md",
-    "001 TTRPG System/Core Stats/Point Buy System/Point Buy System.md",
-    "001 TTRPG System/Core Stats/Soul.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Point Buy System/Recommended Point Buy Tiers.md",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Point Buy System/Point Buy System.md",
     "001 TTRPG System/Core Stats/Core Stat Attributes/Spark.md",
     "001 TTRPG System/Core Stats/Core Stat Attributes/Pulse.md",
     "001 TTRPG System/Core Stats/Core Stat Attributes/Thread.md",
-    "001 TTRPG System/Core Stats/Point Buy System/Point Buy Samples",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Point Buy System/Point Buy Samples",
     "001 TTRPG System/Core Stats/Core Stat Attributes",
-    "001 TTRPG System/Core Stats/Point Buy System",
+    "001 TTRPG System/Core Stats/Core Stat Attributes/Point Buy System",
     "001 TTRPG System/Core Stats",
     "001 TTRPG System",
     "Miscellaneous Topics",
