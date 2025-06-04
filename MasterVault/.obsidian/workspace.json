@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "002 MTG Arena/Card Wishlists/MTGA Wishlist.md",
+                "file": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
                 "mode": "source",
-                "source": true
+                "source": false
               },
               "icon": "lucide-file",
-              "title": "MTGA Wishlist"
+              "title": "Insert, Update, Archive Script"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "002 MTG Arena/Card Wishlists/MTGA Wishlist.md",
+                "file": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for MTGA Wishlist"
+              "title": "Backlinks for Insert, Update, Archive Script"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "002 MTG Arena/Card Wishlists/MTGA Wishlist.md",
+                "file": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from MTGA Wishlist"
+              "title": "Outgoing links from Insert, Update, Archive Script"
             }
           },
           {
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "002 MTG Arena/Card Wishlists/MTGA Wishlist.md",
+                "file": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of MTGA Wishlist"
+              "title": "Outline of Insert, Update, Archive Script"
             }
           }
         ]
@@ -171,8 +171,10 @@
   },
   "active": "973379fc8b7907aa",
   "lastOpenFiles": [
-    "001 TTRPG System/Core Stats/Point Buy System/Recommended Point Buy Tiers.md",
     "002 MTG Arena/Card Wishlists/MTGA Wishlist.md",
+    "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
+    "004 ChatGPT Sync to Obsidian",
+    "001 TTRPG System/Core Stats/Point Buy System/Recommended Point Buy Tiers.md",
     "Miscellaneous Topics/Test File.md",
     "001 TTRPG System/Core Stats/Soul.md",
     "002 MTG Arena/Card Collection.md",
