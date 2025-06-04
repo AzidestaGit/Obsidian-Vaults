@@ -151,5 +151,11 @@
     "filepath": "Miscellaneous Topics/Personal Matrix Table.md",
     "title": "Personal Matrix Table",
     "content_hash": "90d47669c27a835d09f7ed75097160badff1bc898d4f54ae885ccddc569dc145"
+  },
+  "b046c027-92c2-43d7-a122-5b3dd1b7f175": {
+    "id": "b046c027-92c2-43d7-a122-5b3dd1b7f175",
+    "filepath": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
+    "title": "Insert, Update, Archive Script",
+    "content_hash": "32b55b3fca366cf5a1b23e883b19fa93507df31caa3775ada3f258c15d9dab9e"
   }
 }

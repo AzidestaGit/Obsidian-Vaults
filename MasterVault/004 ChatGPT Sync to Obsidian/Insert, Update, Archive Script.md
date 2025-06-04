@@ -1,3 +1,7 @@
+---
+uuid: b046c027-92c2-43d7-a122-5b3dd1b7f175
+---
+
 # Vault Sync System – Technical Overview
 
 This document outlines the architecture, behavior, and recovery procedures for your smart, Obsidian-compatible vault synchronization system. It uses Python, Supabase, OpenAI embeddings, and YAML frontmatter to enable AI-accessible, version-aware syncing of all Markdown files in your vault.
@@ -127,4 +131,3 @@ If `vault_index.json` is deleted:
 - Run `sync_vault_smart.py` manually, or automate it with a file watcher.
 - Back up `vault_index.json` regularly.
 - If you move your vault, keep relative paths and update your `.env`.
-
