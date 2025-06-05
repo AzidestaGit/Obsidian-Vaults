@@ -15,7 +15,7 @@
               "state": {
                 "file": "001 TTRPG System/Core Stats/Body.md",
                 "mode": "source",
-                "source": true
+                "source": false
               },
               "icon": "lucide-file",
               "title": "Body"
@@ -98,6 +98,7 @@
         "state": {
           "type": "backlink",
           "state": {
+            "file": "001 TTRPG System/Core Stats/Body.md",
             "collapseAll": false,
             "extraContext": false,
             "sortOrder": "alphabetical",
