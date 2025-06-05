@@ -10,7 +10,7 @@ import subprocess
 # Configuration
 FOLDER_TO_WATCH = r"C:\ObsidianVaults\Brain"
 COOLDOWN_SECONDS = 60    # 🔄 1 minute cooldown before auto-commit
-IDLE_THRESHOLD_SECONDS = 360  # 💤 6 minutes idle timeout
+IDLE_THRESHOLD_SECONDS = 300  # 💤 6 minutes idle timeout
 GIT_REPO_PATH = r"C:\ObsidianVaults"  # Git repo path
 
 # Global state
