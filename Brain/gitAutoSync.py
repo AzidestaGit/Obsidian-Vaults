@@ -41,7 +41,7 @@ def run_git_commands(force=False):
             diff_result = subprocess.run(["git", "-C", GIT_REPO_PATH, "diff", "--cached", "--name-status"],
                                          stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
             if not force:
-                print("🕒 60s idle reached...\n🎉 Pushing files to Git...")
+                print("🕒\u200260s idle reached...\n🎉 Pushing files to Git...")
             else:
                 print("📤 Pushing files to Git...")
 
@@ -51,7 +51,7 @@ def run_git_commands(force=False):
 
                 action = {
                     "A": "➕ Added",
-                    "M": "✏️ Edited",
+                    "M": "✏️\u2002Edited",
                     "D": "➖ Removed",
                     "R100": "🔀 Moved"
                 }.get(status_code, f"Changed ({status_code})")
