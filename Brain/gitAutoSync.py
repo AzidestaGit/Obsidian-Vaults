@@ -1,6 +1,6 @@
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import tkinter as tk
@@ -9,18 +9,18 @@ import subprocess
 
 # Configuration
 FOLDER_TO_WATCH = r"C:\ObsidianVaults\Brain"
-COOLDOWN_SECONDS = 120  # 2 minutes
-IDLE_THRESHOLD_SECONDS = 600  # 10 minutes
-GIT_REPO_PATH = r"C:\ObsidianVaults"  # Path to the Git repository
+COOLDOWN_SECONDS = 60    # 🔄 1 minute cooldown before auto-commit
+IDLE_THRESHOLD_SECONDS = 360  # 💤 6 minutes idle timeout
+GIT_REPO_PATH = r"C:\ObsidianVaults"  # Git repo path
 
-# Global variables
+# Global state
 last_change_time = datetime.now()
 cooldown_remaining = COOLDOWN_SECONDS
 idle_remaining = IDLE_THRESHOLD_SECONDS
 status = "Active"
 watcher_enabled = True
 
-# File change handler
+# File system event handler
 class ChangeHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         global last_change_time, status
@@ -29,7 +29,7 @@ class ChangeHandler(FileSystemEventHandler):
             status = "Active"
             print(f"File change detected: {event.src_path}")
 
-# Function to run Git commands
+# Git automation
 def run_git_commands():
     try:
         print("Changes detected. Committing and pushing...")
@@ -40,17 +40,18 @@ def run_git_commands():
     except subprocess.CalledProcessError as e:
         print(f"Error during Git operations: {e}")
 
-# Function to update timers
+# Timer and commit logic
 def update_timers():
     global cooldown_remaining, idle_remaining, status, watcher_enabled, last_change_time
     while True:
         now = datetime.now()
-        cooldown_remaining = max(0, COOLDOWN_SECONDS - (now - last_change_time).total_seconds())
-        idle_remaining = max(0, IDLE_THRESHOLD_SECONDS - (now - last_change_time).total_seconds())
+        seconds_since_change = (now - last_change_time).total_seconds()
+        cooldown_remaining = max(0, COOLDOWN_SECONDS - seconds_since_change)
+        idle_remaining = max(0, IDLE_THRESHOLD_SECONDS - seconds_since_change)
 
         if cooldown_remaining == 0 and watcher_enabled:
             run_git_commands()
-            last_change_time = datetime.now()  # Reset cooldown timer
+            last_change_time = datetime.now()  # reset after commit
 
         if idle_remaining == 0 and watcher_enabled:
             status = "Idle"
@@ -59,7 +60,7 @@ def update_timers():
 
         time.sleep(1)
 
-# Function to update the GUI
+# GUI updater
 def update_gui():
     while True:
         cooldown_label.config(text=f"Cooldown Remaining: {int(cooldown_remaining)} seconds")
@@ -68,9 +69,9 @@ def update_gui():
         root.update()
         time.sleep(1)
 
-# Start file watcher
+# Watchdog runner
 def start_watcher():
-    global watcher_enabled, status
+    global status
     event_handler = ChangeHandler()
     observer = Observer()
     observer.schedule(event_handler, FOLDER_TO_WATCH, recursive=True)
@@ -80,13 +81,11 @@ def start_watcher():
         while True:
             if not watcher_enabled:
                 status = "Paused"
-                observer.stop()
-                time.sleep(1)
             else:
-                observer.start()
                 status = "Active"
             time.sleep(1)
     except KeyboardInterrupt:
+        print("Watcher interrupted. Stopping...")
         observer.stop()
     observer.join()
 
@@ -104,10 +103,13 @@ cooldown_label.pack(pady=5)
 idle_label = tk.Label(root, text=f"Idle Remaining: {idle_remaining} seconds", font=("Arial", 12))
 idle_label.pack(pady=5)
 
-# Start threads
+# Launch threads
 Thread(target=update_timers, daemon=True).start()
 Thread(target=update_gui, daemon=True).start()
 Thread(target=start_watcher, daemon=True).start()
 
-# Run the GUI
-root.mainloop()
+# Run GUI
+try:
+    root.mainloop()
+except KeyboardInterrupt:
+    print("Exiting GUI...")
