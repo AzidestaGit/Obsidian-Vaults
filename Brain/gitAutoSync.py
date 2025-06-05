@@ -1,133 +1,160 @@
 import os
 import time
+import tkinter as tk
 from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import tkinter as tk
 from threading import Thread
 import subprocess
 
-# Configuration
+# === CONFIGURATION ===
 FOLDER_TO_WATCH = r"C:\ObsidianVaults\Brain"
-COOLDOWN_SECONDS = 60    # 🔄 1 minute cooldown before auto-commit
-IDLE_THRESHOLD_SECONDS = 300  # 💤 6 minutes idle timeout
-GIT_REPO_PATH = r"C:\ObsidianVaults"  # Git repo path
+GIT_REPO_PATH = r"C:\ObsidianVaults"
+COOLDOWN_SECONDS = 60
+IDLE_THRESHOLD_SECONDS = 300  # 5 minutes
+IDLE_POLL_INTERVAL = 10       # check every 10 seconds in idle mode
 
-# Global state
+# === GLOBALS ===
 last_change_time = datetime.now()
-cooldown_remaining = COOLDOWN_SECONDS
-idle_remaining = IDLE_THRESHOLD_SECONDS
-status = "Active"
+cooldown_checkpoints = {30, 60}
+change_log = []
+idle_mode = False
 watcher_enabled = True
+status = "Initializing"
+observer = None
+root = None
 
-# File system event handler
+# === FILE CHANGE TRACKING ===
 class ChangeHandler(FileSystemEventHandler):
-    def on_any_event(self, event):
-        global last_change_time, status
-        if watcher_enabled:
-            last_change_time = datetime.now()
-            status = "Active"
-            print(f"File change detected: {event.src_path}")
+    def on_modified(self, event):
+        if not event.is_directory:
+            change_log.append(("Edited", event.src_path))
 
-# Git automation
+    def on_created(self, event):
+        if not event.is_directory:
+            change_log.append(("Added", event.src_path))
+
+    def on_deleted(self, event):
+        if not event.is_directory:
+            change_log.append(("Removed", event.src_path))
+
+    def on_moved(self, event):
+        if not event.is_directory:
+            change_log.append(("Moved", f"{event.src_path} -> {event.dest_path}"))
+
+# === GIT OPS ===
 def run_git_commands():
     try:
-        # Stage any new or modified files
         subprocess.run(["git", "-C", GIT_REPO_PATH, "add", "."], check=True)
-
-        # Check for staged changes
-        result = subprocess.run(
-            ["git", "-C", GIT_REPO_PATH, "status", "--porcelain"],
-            stdout=subprocess.PIPE,
-            text=True
-        )
-
+        result = subprocess.run(["git", "-C", GIT_REPO_PATH, "status", "--porcelain"], stdout=subprocess.PIPE, text=True)
         if result.stdout.strip():
-            print("Changes detected. Committing and pushing...")
+            print("📤 Pushing files to Git...")
+            for change_type, path in change_log:
+                print(f"{change_type}: {path}")
             subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"], check=True)
             subprocess.run(["git", "-C", GIT_REPO_PATH, "push"], check=True)
-            print("✅ Sync complete: Changes committed and pushed.")
+            print("✅ Push Complete! ✨\n")
         else:
-            print("🟡 No changes to commit. Push not needed.")
+            print("🤷 No modified files found. No push needed...\n")
     except subprocess.CalledProcessError as e:
-        print(f"❌ Git operation failed: {e}")
+        print(f"💥 ERROR! Git operation failed!\n🚫 Reason: {e}\n")
 
-# Timer and commit logic
+# === TIMER LOGIC ===
 def update_timers():
-    global cooldown_remaining, idle_remaining, status, watcher_enabled, last_change_time
-
-    # 🔁 Check immediately on startup
-    print("🚀 Running initial sync check on startup...")
-    run_git_commands()
-    last_change_time = datetime.now()  # Start timers from now
-
+    global last_change_time, idle_mode, change_log, status, root
+    print("🟢 Git Auto Sync Running... 💻\n🎬 Opening GUI...\n")
     while True:
-        now = datetime.now()
-        seconds_since_change = (now - last_change_time).total_seconds()
-        cooldown_remaining = max(0, COOLDOWN_SECONDS - seconds_since_change)
-        idle_remaining = max(0, IDLE_THRESHOLD_SECONDS - seconds_since_change)
+        elapsed = (datetime.now() - last_change_time).total_seconds()
 
-        if cooldown_remaining == 0 and watcher_enabled:
+        if not idle_mode and int(elapsed) in cooldown_checkpoints:
+            if change_log:
+                print("🔍 File change detected in the following files:")
+                for change_type, path in change_log:
+                    print(f"{change_type}: {path}")
+                print("\n⏱️ Restarting Countdown...\n")
+                last_change_time = datetime.now()
+                change_log = []
+
+        elif not idle_mode and int(elapsed) >= COOLDOWN_SECONDS:
             run_git_commands()
-            last_change_time = datetime.now()  # reset after commit or check
+            last_change_time = datetime.now()
+            change_log = []
 
-        if idle_remaining == 0 and watcher_enabled:
-            status = "Idle"
-            watcher_enabled = False
-            print("🛑 No activity detected. Pausing watcher...")
+        elif not idle_mode and elapsed >= IDLE_THRESHOLD_SECONDS:
+            print("😴 You've been idle for 5 minutes... Pausing script...\n")
+            idle_mode = True
+            close_gui()
+            observer.stop()
+            Thread(target=idle_watcher, daemon=True).start()
 
         time.sleep(1)
 
-# GUI updater
+# === IDLE MONITOR ===
+def idle_watcher():
+    global idle_mode, last_change_time, change_log, status, observer
+    while idle_mode:
+        for dirpath, _, filenames in os.walk(FOLDER_TO_WATCH):
+            for f in filenames:
+                try:
+                    full_path = os.path.join(dirpath, f)
+                    if os.path.getmtime(full_path) > last_change_time.timestamp():
+                        print("👋 Activity detected! Resuming Auto Git Sync Script... 🎉\n🖥️ Opening GUI...\n")
+                        last_change_time = datetime.now()
+                        idle_mode = False
+                        start_gui()
+                        observer = Observer()
+                        observer.schedule(ChangeHandler(), FOLDER_TO_WATCH, recursive=True)
+                        observer.start()
+                        return
+                except FileNotFoundError:
+                    continue
+        time.sleep(IDLE_POLL_INTERVAL)
+
+# === GUI ===
 def update_gui():
+    global root
     while True:
-        cooldown_label.config(text=f"Cooldown Remaining: {int(cooldown_remaining)} seconds")
-        idle_label.config(text=f"Idle Remaining: {int(idle_remaining)} seconds")
-        status_label.config(text=f"Status: {status}")
-        root.update()
+        if root:
+            elapsed = int((datetime.now() - last_change_time).total_seconds())
+            cooldown = max(0, COOLDOWN_SECONDS - elapsed)
+            idle = max(0, IDLE_THRESHOLD_SECONDS - elapsed)
+            status_label.config(text=f"Status: {'Paused' if idle_mode else 'Active'}")
+            cooldown_label.config(text=f"Cooldown Remaining: {cooldown} seconds")
+            idle_label.config(text=f"Idle Remaining: {idle} seconds")
+            root.update()
         time.sleep(1)
 
-# Watchdog runner
-def start_watcher():
-    global status
-    event_handler = ChangeHandler()
-    observer = Observer()
-    observer.schedule(event_handler, FOLDER_TO_WATCH, recursive=True)
-    observer.start()
-    print(f"👀 Watching folder: {FOLDER_TO_WATCH}")
+def start_gui():
+    global root, status_label, cooldown_label, idle_label
+    root = tk.Tk()
+    root.title("Git AutoSync Dashboard")
+    root.geometry("400x200")
+    status_label = tk.Label(root, text=f"Status: {status}", font=("Arial", 14))
+    status_label.pack(pady=10)
+    cooldown_label = tk.Label(root, text="", font=("Arial", 12))
+    cooldown_label.pack(pady=5)
+    idle_label = tk.Label(root, text="", font=("Arial", 12))
+    idle_label.pack(pady=5)
+
+def close_gui():
+    global root
+    if root:
+        root.destroy()
+        root = None
+
+# === MAIN ===
+def start_all():
+    global observer
     try:
-        while True:
-            if not watcher_enabled:
-                status = "Paused"
-            else:
-                status = "Active"
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("👋 Watcher interrupted. Stopping...")
-        observer.stop()
-    observer.join()
+        start_gui()
+        Thread(target=update_gui, daemon=True).start()
+        observer = Observer()
+        observer.schedule(ChangeHandler(), FOLDER_TO_WATCH, recursive=True)
+        observer.start()
+        Thread(target=update_timers, daemon=True).start()
+        root.mainloop()
+    except Exception as e:
+        print(f"❗ ERROR! Git Auto Sync NOT started!\n🧨 Reason: {e}")
 
-# GUI setup
-root = tk.Tk()
-root.title("Git AutoSync Dashboard")
-root.geometry("400x200")
-
-status_label = tk.Label(root, text=f"Status: {status}", font=("Arial", 14))
-status_label.pack(pady=10)
-
-cooldown_label = tk.Label(root, text=f"Cooldown Remaining: {cooldown_remaining} seconds", font=("Arial", 12))
-cooldown_label.pack(pady=5)
-
-idle_label = tk.Label(root, text=f"Idle Remaining: {idle_remaining} seconds", font=("Arial", 12))
-idle_label.pack(pady=5)
-
-# Launch threads
-Thread(target=update_timers, daemon=True).start()
-Thread(target=update_gui, daemon=True).start()
-Thread(target=start_watcher, daemon=True).start()
-
-# Run GUI
-try:
-    root.mainloop()
-except KeyboardInterrupt:
-    print("👋 Exiting GUI...")
+if __name__ == '__main__':
+    start_all()
