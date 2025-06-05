@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
+                "file": "001 TTRPG System/Core Stats/Body.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Insert, Update, Archive Script"
+              "title": "Body"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
+                "file": "001 TTRPG System/Core Stats/Body.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Insert, Update, Archive Script"
+              "title": "Backlinks for Body"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
+                "file": "001 TTRPG System/Core Stats/Body.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Insert, Update, Archive Script"
+              "title": "Outgoing links from Body"
             }
           },
           {
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
+                "file": "001 TTRPG System/Core Stats/Body.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Insert, Update, Archive Script"
+              "title": "Outline of Body"
             }
           }
         ]
@@ -171,10 +171,10 @@
   },
   "active": "973379fc8b7907aa",
   "lastOpenFiles": [
+    "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
     "Untitled 1.canvas",
     "Untitled.canvas",
     "002 MTG Arena/Card Wishlists/MTGA Wishlist.md",
-    "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
     "004 ChatGPT Sync to Obsidian",
     "001 TTRPG System/Core Stats/Point Buy System/Recommended Point Buy Tiers.md",
     "Miscellaneous Topics/Test File.md",
