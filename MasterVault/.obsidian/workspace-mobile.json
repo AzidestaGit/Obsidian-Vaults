@@ -11,17 +11,14 @@
             "id": "111880c2849aec48",
             "type": "leaf",
             "state": {
-              "type": "canvas",
+              "type": "markdown",
               "state": {
-                "file": "Untitled.canvas",
-                "viewState": {
-                  "x": 0,
-                  "y": 0,
-                  "zoom": 0
-                }
+                "file": "001 TTRPG System/Core Stats/Body.md",
+                "mode": "source",
+                "source": true
               },
-              "icon": "lucide-layout-dashboard",
-              "title": "Untitled"
+              "icon": "lucide-file",
+              "title": "Body"
             }
           }
         ]
@@ -101,7 +98,7 @@
         "state": {
           "type": "backlink",
           "state": {
-            "file": "Untitled.canvas",
+            "file": "001 TTRPG System/Core Stats/Body.md",
             "collapseAll": false,
             "extraContext": false,
             "sortOrder": "alphabetical",
@@ -156,9 +153,9 @@
   },
   "active": "111880c2849aec48",
   "lastOpenFiles": [
+    "Untitled.canvas",
     "hide-yaml.md",
     "hide-yaml.css",
-    "Untitled.canvas",
     "Untitled 2.canvas",
     "001 TTRPG System/Core Stats/Body.md",
     "New AI Assistant Flow.md",
