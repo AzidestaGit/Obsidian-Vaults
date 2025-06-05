@@ -51,7 +51,7 @@ def run_git_commands(force=False):
 
                 action = {
                     "A": "➕ Added",
-                    "M": "✏️\u2002Edited",
+                    "M": "✏️ Edited",
                     "D": "➖ Removed",
                     "R100": "🔀 Moved"
                 }.get(status_code, f"Changed ({status_code})")
