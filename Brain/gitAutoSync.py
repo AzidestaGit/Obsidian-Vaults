@@ -57,7 +57,6 @@ def run_git_commands(force=False):
                 }.get(status_code, f"Changed ({status_code})")
 
                 print(f"{action}: {filepath}")
-            print("\n")
 
             subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"],
                            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
