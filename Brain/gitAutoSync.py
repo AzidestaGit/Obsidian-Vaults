@@ -63,15 +63,20 @@ def run_git_commands():
 def update_timers():
     global last_change_time, idle_mode, change_log, status, root
     print("🟢 Git Auto Sync Running... 💻\n🎬 Opening GUI...\n")
+
+    # Immediate sync check on startup
+    run_git_commands()
+    last_change_time = datetime.now()
+
     while True:
         elapsed = (datetime.now() - last_change_time).total_seconds()
 
         if not idle_mode and int(elapsed) in cooldown_checkpoints:
             if change_log:
-                print("🔍 File change detected in the following files:")
+                print("🟨 File change detected in the following files:")
                 for change_type, path in change_log:
                     print(f"{change_type}: {path}")
-                print("\n⏱️ Restarting Countdown...\n")
+                print("⏱️ Restarting Countdown...\n")
                 last_change_time = datetime.now()
                 change_log = []
 
@@ -98,7 +103,7 @@ def idle_watcher():
                 try:
                     full_path = os.path.join(dirpath, f)
                     if os.path.getmtime(full_path) > last_change_time.timestamp():
-                        print("👋 Activity detected! Resuming Auto Git Sync Script... 🎉\n🖥️ Opening GUI...\n")
+                        print("🔄 Activity detected! Resuming Auto Git Sync Script... 🎉\n🖥️ Opening GUI...\n")
                         last_change_time = datetime.now()
                         idle_mode = False
                         start_gui()
