@@ -174,3 +174,4 @@ if __name__ == '__main__':
         if observer:
             observer.stop()
         close_gui()
+
