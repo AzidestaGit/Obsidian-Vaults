@@ -64,11 +64,11 @@ def run_git_commands():
                     "R100": "Moved"
                 }.get(status_code, f"Changed ({status_code})")
 
-                print(f"{action}: {filepath}")
+                print(f"{action}: {filepath}\n")
 
             subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run(["git", "-C", GIT_REPO_PATH, "push"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print("\n ✅ Push Complete! ✨\n")
+            print("✅ Push Complete! ✨\n")
         else:
             print("🤷 No modified files found. No push needed...\n")
     except subprocess.CalledProcessError as e:
