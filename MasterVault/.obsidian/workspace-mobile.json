@@ -11,17 +11,35 @@
             "id": "111880c2849aec48",
             "type": "leaf",
             "state": {
+              "type": "canvas",
+              "state": {
+                "file": "Untitled.canvas",
+                "viewState": {
+                  "x": 0,
+                  "y": 0,
+                  "zoom": 0
+                }
+              },
+              "icon": "lucide-layout-dashboard",
+              "title": "Untitled"
+            }
+          },
+          {
+            "id": "fe2b352944e1fca1",
+            "type": "leaf",
+            "state": {
               "type": "markdown",
               "state": {
-                "file": "001 TTRPG System/Core Stats/Body.md",
+                "file": "hide-yaml.md",
                 "mode": "source",
-                "source": false
+                "source": true
               },
               "icon": "lucide-file",
-              "title": "Body"
+              "title": "hide-yaml"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -98,7 +116,7 @@
         "state": {
           "type": "backlink",
           "state": {
-            "file": "001 TTRPG System/Core Stats/Body.md",
+            "file": "hide-yaml.md",
             "collapseAll": false,
             "extraContext": false,
             "sortOrder": "alphabetical",
@@ -151,14 +169,16 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "111880c2849aec48",
+  "active": "fe2b352944e1fca1",
   "lastOpenFiles": [
+    "Untitled.canvas",
+    "hide-yaml.md",
+    "Untitled 2.canvas",
     "001 TTRPG System/Core Stats/Body.md",
     "New AI Assistant Flow.md",
     "004 ChatGPT Sync to Obsidian/PMEM (Persistent Memory Enhancement Module).md",
     "004 ChatGPT Sync to Obsidian/Insert, Update, Archive Script.md",
     "Untitled 1.canvas",
-    "Untitled.canvas",
     "004 ChatGPT Sync to Obsidian",
     "001 TTRPG System/Core Stats/Point Buy System/Point Buy System.md",
     "001 TTRPG System/Core Stats/Point Buy System",
