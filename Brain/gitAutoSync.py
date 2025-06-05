@@ -32,13 +32,25 @@ class ChangeHandler(FileSystemEventHandler):
 # Git automation
 def run_git_commands():
     try:
-        print("Changes detected. Committing and pushing...")
+        # Stage any new or modified files
         subprocess.run(["git", "-C", GIT_REPO_PATH, "add", "."], check=True)
-        subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"], check=True)
-        subprocess.run(["git", "-C", GIT_REPO_PATH, "push"], check=True)
-        print("Changes pushed successfully.")
+
+        # Check for staged changes
+        result = subprocess.run(
+            ["git", "-C", GIT_REPO_PATH, "status", "--porcelain"],
+            stdout=subprocess.PIPE,
+            text=True
+        )
+
+        if result.stdout.strip():
+            print("Changes detected. Committing and pushing...")
+            subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"], check=True)
+            subprocess.run(["git", "-C", GIT_REPO_PATH, "push"], check=True)
+            print("✅ Sync complete: Changes committed and pushed.")
+        else:
+            print("🟡 No changes to commit. Push not needed.")
     except subprocess.CalledProcessError as e:
-        print(f"Error during Git operations: {e}")
+        print(f"❌ Git operation failed: {e}")
 
 # Timer and commit logic
 def update_timers():
@@ -51,12 +63,12 @@ def update_timers():
 
         if cooldown_remaining == 0 and watcher_enabled:
             run_git_commands()
-            last_change_time = datetime.now()  # reset after commit
+            last_change_time = datetime.now()  # reset after commit or check
 
         if idle_remaining == 0 and watcher_enabled:
             status = "Idle"
             watcher_enabled = False
-            print("No activity detected. Pausing watcher...")
+            print("🛑 No activity detected. Pausing watcher...")
 
         time.sleep(1)
 
@@ -76,7 +88,7 @@ def start_watcher():
     observer = Observer()
     observer.schedule(event_handler, FOLDER_TO_WATCH, recursive=True)
     observer.start()
-    print(f"Watching folder: {FOLDER_TO_WATCH}")
+    print(f"👀 Watching folder: {FOLDER_TO_WATCH}")
     try:
         while True:
             if not watcher_enabled:
@@ -85,7 +97,7 @@ def start_watcher():
                 status = "Active"
             time.sleep(1)
     except KeyboardInterrupt:
-        print("Watcher interrupted. Stopping...")
+        print("👋 Watcher interrupted. Stopping...")
         observer.stop()
     observer.join()
 
@@ -112,4 +124,4 @@ Thread(target=start_watcher, daemon=True).start()
 try:
     root.mainloop()
 except KeyboardInterrupt:
-    print("Exiting GUI...")
+    print("👋 Exiting GUI...")
