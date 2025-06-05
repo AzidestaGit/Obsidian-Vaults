@@ -17,7 +17,6 @@ IDLE_POLL_INTERVAL = 10       # check every 10 seconds in idle mode
 # === GLOBALS ===
 last_change_time = datetime.now()
 cooldown_checkpoints = {30, 60}
-change_log = []
 idle_mode = False
 watcher_enabled = True
 status = "Initializing"
@@ -26,36 +25,47 @@ root = None
 
 # === FILE CHANGE TRACKING ===
 class ChangeHandler(FileSystemEventHandler):
-    def on_modified(self, event):
+    def on_any_event(self, event):
+        global last_change_time
         if not event.is_directory:
-            change_log.append(("Edited", event.src_path))
-
-    def on_created(self, event):
-        if not event.is_directory:
-            change_log.append(("Added", event.src_path))
-
-    def on_deleted(self, event):
-        if not event.is_directory:
-            change_log.append(("Removed", event.src_path))
-
-    def on_moved(self, event):
-        if not event.is_directory:
-            change_log.append(("Moved", f"{event.src_path} -> {event.dest_path}"))
+            last_change_time = datetime.now()
 
 # === GIT OPS ===
 def run_git_commands():
     try:
         subprocess.run(["git", "-C", GIT_REPO_PATH, "add", "."], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        # Check for staged files
         result = subprocess.run(
             ["git", "-C", GIT_REPO_PATH, "status", "--porcelain"],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True
         )
+
         if result.stdout.strip():
+            # Show file list about to be committed
+            diff_result = subprocess.run(
+                ["git", "-C", GIT_REPO_PATH, "diff", "--cached", "--name-status"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            )
+
             print("📤 Pushing files to Git...")
-            for change_type, path in change_log:
-                print(f"{change_type}: {path}")
+            for line in diff_result.stdout.strip().splitlines():
+                status_code, *filepath_parts = line.split()
+                filepath = " ".join(filepath_parts)
+
+                action = {
+                    "A": "Added",
+                    "M": "Edited",
+                    "D": "Removed",
+                    "R100": "Moved"
+                }.get(status_code, f"Changed ({status_code})")
+
+                print(f"{action}: {filepath}")
+
             subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run(["git", "-C", GIT_REPO_PATH, "push"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print("✅ Push Complete! ✨\n")
@@ -66,10 +76,9 @@ def run_git_commands():
 
 # === TIMER LOGIC ===
 def update_timers():
-    global last_change_time, idle_mode, change_log, status, root
+    global last_change_time, idle_mode, status, root
     print("🟢 Git Auto Sync Running... 💻\n🎬 Opening GUI...\n")
 
-    # Immediate sync check on startup
     run_git_commands()
     last_change_time = datetime.now()
 
@@ -77,18 +86,9 @@ def update_timers():
         elapsed = (datetime.now() - last_change_time).total_seconds()
 
         if not idle_mode and int(elapsed) in cooldown_checkpoints:
-            if change_log:
-                print("🟨 File change detected in the following files:")
-                for change_type, path in change_log:
-                    print(f"{change_type}: {path}")
-                print("⏱️ Restarting Countdown...\n")
-                last_change_time = datetime.now()
-                change_log = []
-
-        elif not idle_mode and int(elapsed) >= COOLDOWN_SECONDS:
+            print("⏱️ 30s/60s checkpoint reached. Checking for changes...")
             run_git_commands()
             last_change_time = datetime.now()
-            change_log = []
 
         elif not idle_mode and elapsed >= IDLE_THRESHOLD_SECONDS:
             print("😴 You've been idle for 5 minutes... Pausing script...\n")
@@ -101,7 +101,7 @@ def update_timers():
 
 # === IDLE MONITOR ===
 def idle_watcher():
-    global idle_mode, last_change_time, change_log, status, observer
+    global idle_mode, last_change_time, status, observer
     while idle_mode:
         for dirpath, _, filenames in os.walk(FOLDER_TO_WATCH):
             for f in filenames:
