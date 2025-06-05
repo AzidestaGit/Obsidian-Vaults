@@ -55,6 +55,12 @@ def run_git_commands():
 # Timer and commit logic
 def update_timers():
     global cooldown_remaining, idle_remaining, status, watcher_enabled, last_change_time
+
+    # 🔁 Check immediately on startup
+    print("🚀 Running initial sync check on startup...")
+    run_git_commands()
+    last_change_time = datetime.now()  # Start timers from now
+
     while True:
         now = datetime.now()
         seconds_since_change = (now - last_change_time).total_seconds()
