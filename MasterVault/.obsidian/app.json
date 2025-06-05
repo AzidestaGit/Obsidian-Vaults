@@ -1,4 +1,5 @@
 {
   "livePreview": false,
-  "defaultViewMode": "source"
+  "defaultViewMode": "source",
+  "newFileLocation": "root"
 }
