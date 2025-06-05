@@ -45,14 +45,19 @@ class ChangeHandler(FileSystemEventHandler):
 # === GIT OPS ===
 def run_git_commands():
     try:
-        subprocess.run(["git", "-C", GIT_REPO_PATH, "add", "."], check=True)
-        result = subprocess.run(["git", "-C", GIT_REPO_PATH, "status", "--porcelain"], stdout=subprocess.PIPE, text=True)
+        subprocess.run(["git", "-C", GIT_REPO_PATH, "add", "."], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        result = subprocess.run(
+            ["git", "-C", GIT_REPO_PATH, "status", "--porcelain"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
         if result.stdout.strip():
             print("📤 Pushing files to Git...")
             for change_type, path in change_log:
                 print(f"{change_type}: {path}")
-            subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"], check=True)
-            subprocess.run(["git", "-C", GIT_REPO_PATH, "push"], check=True)
+            subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["git", "-C", GIT_REPO_PATH, "push"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print("✅ Push Complete! ✨\n")
         else:
             print("🤷 No modified files found. No push needed...\n")
@@ -162,4 +167,10 @@ def start_all():
         print(f"❗ ERROR! Git Auto Sync NOT started!\n🧨 Reason: {e}")
 
 if __name__ == '__main__':
-    start_all()
+    try:
+        start_all()
+    except KeyboardInterrupt:
+        print("🛑 Git Auto Sync manually stopped. Goodbye! 👋")
+        if observer:
+            observer.stop()
+        close_gui()
