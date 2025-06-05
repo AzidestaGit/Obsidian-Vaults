@@ -16,26 +16,27 @@ IDLE_POLL_INTERVAL = 10       # check every 10 seconds in idle mode
 
 # === GLOBALS ===
 last_change_time = datetime.now()
-cooldown_checkpoints = {30, 60}
+cooldown_checkpoints = {30}
 idle_mode = False
 watcher_enabled = True
 status = "Initializing"
 observer = None
 root = None
+last_activity_time = datetime.now()
 
 # === FILE CHANGE TRACKING ===
 class ChangeHandler(FileSystemEventHandler):
     def on_any_event(self, event):
-        global last_change_time
+        global last_change_time, last_activity_time
         if not event.is_directory:
             last_change_time = datetime.now()
+            last_activity_time = datetime.now()
 
 # === GIT OPS ===
 def run_git_commands():
     try:
         subprocess.run(["git", "-C", GIT_REPO_PATH, "add", "."], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        # Check for staged files
         result = subprocess.run(
             ["git", "-C", GIT_REPO_PATH, "status", "--porcelain"],
             stdout=subprocess.PIPE,
@@ -44,7 +45,6 @@ def run_git_commands():
         )
 
         if result.stdout.strip():
-            # Show file list about to be committed
             diff_result = subprocess.run(
                 ["git", "-C", GIT_REPO_PATH, "diff", "--cached", "--name-status"],
                 stdout=subprocess.PIPE,
@@ -64,7 +64,8 @@ def run_git_commands():
                     "R100": "Moved"
                 }.get(status_code, f"Changed ({status_code})")
 
-                print(f"{action}: {filepath}\n")
+                print(f"{action}: {filepath}")
+            print()  # blank line for spacing
 
             subprocess.run(["git", "-C", GIT_REPO_PATH, "commit", "-m", "Auto-commit"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run(["git", "-C", GIT_REPO_PATH, "push"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -76,21 +77,28 @@ def run_git_commands():
 
 # === TIMER LOGIC ===
 def update_timers():
-    global last_change_time, idle_mode, status, root
+    global last_change_time, idle_mode, status, root, last_activity_time
     print("🟢 Git Auto Sync Running... 💻\n🎬 Opening GUI...\n")
 
     run_git_commands()
     last_change_time = datetime.now()
+    last_activity_time = datetime.now()
 
     while True:
-        elapsed = (datetime.now() - last_change_time).total_seconds()
+        now = datetime.now()
+        elapsed = (now - last_activity_time).total_seconds()
 
         if not idle_mode and int(elapsed) in cooldown_checkpoints:
-            print("⏱️ 30s/60s checkpoint reached. Checking for changes...")
-            run_git_commands()
-            last_change_time = datetime.now()
+            if elapsed < COOLDOWN_SECONDS:
+                print("🟨 File change detected at 30s checkpoint.\n⏱️ Restarting Countdown...\n")
+                last_activity_time = now  # reset timer
+                continue
 
-        elif not idle_mode and elapsed >= IDLE_THRESHOLD_SECONDS:
+        if not idle_mode and elapsed >= COOLDOWN_SECONDS:
+            run_git_commands()
+            last_activity_time = now  # reset after commit
+
+        if not idle_mode and elapsed >= IDLE_THRESHOLD_SECONDS:
             print("😴 You've been idle for 5 minutes... Pausing script...\n")
             idle_mode = True
             close_gui()
@@ -101,15 +109,16 @@ def update_timers():
 
 # === IDLE MONITOR ===
 def idle_watcher():
-    global idle_mode, last_change_time, status, observer
+    global idle_mode, last_change_time, status, observer, last_activity_time
     while idle_mode:
         for dirpath, _, filenames in os.walk(FOLDER_TO_WATCH):
             for f in filenames:
                 try:
                     full_path = os.path.join(dirpath, f)
-                    if os.path.getmtime(full_path) > last_change_time.timestamp():
+                    if os.path.getmtime(full_path) > last_activity_time.timestamp():
                         print("🔄 Activity detected! Resuming Auto Git Sync Script... 🎉\n🖥️ Opening GUI...\n")
                         last_change_time = datetime.now()
+                        last_activity_time = datetime.now()
                         idle_mode = False
                         start_gui()
                         observer = Observer()
@@ -125,7 +134,7 @@ def update_gui():
     global root
     while True:
         if root:
-            elapsed = int((datetime.now() - last_change_time).total_seconds())
+            elapsed = int((datetime.now() - last_activity_time).total_seconds())
             cooldown = max(0, COOLDOWN_SECONDS - elapsed)
             idle = max(0, IDLE_THRESHOLD_SECONDS - elapsed)
             status_label.config(text=f"Status: {'Paused' if idle_mode else 'Active'}")
@@ -174,4 +183,3 @@ if __name__ == '__main__':
         if observer:
             observer.stop()
         close_gui()
-
