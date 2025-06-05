@@ -30,11 +30,14 @@ if os.path.exists(INDEX_FILE):
 else:
     local_index = {}
 
+
 def compute_hash(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
+
 def get_embedding(text):
     return model.encode(text).tolist()
+
 
 def sync_file(file_path):
     rel_path = os.path.relpath(file_path, NOTES_FOLDER).replace("\\", "/")
@@ -56,7 +59,8 @@ def sync_file(file_path):
             file_uuid = post.metadata["uuid"]
 
         # Check if file exists in Supabase
-        result = supabase.table(SUPABASE_TABLE).select("*").eq("id", file_uuid).execute()
+        result = supabase.table(SUPABASE_TABLE).select("*").eq(
+            "id", file_uuid).execute()
         row = result.data[0] if result.data else None
 
         if row:
@@ -79,7 +83,8 @@ def sync_file(file_path):
                     "content_hash": content_hash,
                     "archived": False
                 }
-                supabase.table(SUPABASE_TABLE).update(payload).eq("id", file_uuid).execute()
+                supabase.table(SUPABASE_TABLE).update(payload).eq(
+                    "id", file_uuid).execute()
                 print(f"🔄 Updated: {rel_path}")
                 for key, val in updates.items():
                     print(f"  ⮕ {key}: {val}")
@@ -110,9 +115,11 @@ def sync_file(file_path):
     except Exception as e:
         print(f"🔥 Error while syncing: {file_path}\n{e}")
 
+
 def archive_missing_files():
     existing_ids = set()
-    response = supabase.table(SUPABASE_TABLE).select("id").eq("archived", False).execute()
+    response = supabase.table(SUPABASE_TABLE).select("id").eq(
+        "archived", False).execute()
     for row in response.data:
         existing_ids.add(row["id"])
 
@@ -121,14 +128,18 @@ def archive_missing_files():
 
     for mid in missing_ids:
         try:
-            supabase.table(SUPABASE_TABLE).update({"archived": True}).eq("id", mid).execute()
+            supabase.table(SUPABASE_TABLE).update({
+                "archived": True
+            }).eq("id", mid).execute()
             print(f"📦 Archived: {mid}")
         except Exception as e:
             print(f"🔥 Archive error: {mid}\n{e}")
 
+
 def save_index():
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
         json.dump(local_index, f, indent=2)
+
 
 # --- Run ---
 print(f"🔄 Sync started at {datetime.now().strftime('%H:%M:%S')}...\n")
