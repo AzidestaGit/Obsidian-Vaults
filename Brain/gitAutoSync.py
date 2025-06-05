@@ -64,10 +64,13 @@ def run_git_commands(force=False):
             subprocess.run(["git", "-C", GIT_REPO_PATH, "push"],
                            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print("✅ Push Complete!\nRestarting timer...\n")
+            return True  # Indicates a push occurred
         elif force:
             print("🤷 No modified files found. No push needed...\n")
+        return False
     except subprocess.CalledProcessError as e:
         print(f"💥 ERROR! Git operation failed!\n🚫 Reason: {e}\n")
+        return False
 
 # === TIMER LOGIC ===
 def update_timers():
@@ -87,7 +90,6 @@ def update_timers():
             if since_check >= 60:
                 last_check_time = now
                 if since_change <= 60:
-                    # List modified files
                     result = subprocess.run(["git", "-C", GIT_REPO_PATH, "diff", "--name-only"],
                                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
                     changed_files = result.stdout.strip().splitlines()
@@ -96,12 +98,14 @@ def update_timers():
                         for path in changed_files:
                             print(path)
                         print("\nRestarting timer...\n")
-                        last_change_time = now
+                        last_check_time = now
+                        last_change_time = now  # ✅ Only reset if modifications found
                         continue
                 else:
-                    # No changes in 60s — try to push if needed
-                    run_git_commands(force=False)
-                    last_change_time = now
+                    pushed = run_git_commands(force=False)
+                    if pushed:
+                        last_change_time = now  # ✅ Only reset if push occurred
+                    last_check_time = now
                     continue
 
             if (now - last_change_time).total_seconds() >= IDLE_THRESHOLD_SECONDS:
@@ -139,8 +143,10 @@ def update_gui():
     global root
     while True:
         if root:
-            elapsed = int((datetime.now() - last_change_time).total_seconds())
-            cooldown = max(0, COOLDOWN_SECONDS - elapsed % 60)
+            now = datetime.now()
+            elapsed = int((now - last_change_time).total_seconds())
+            check_elapsed = int((now - last_check_time).total_seconds())
+            cooldown = max(0, COOLDOWN_SECONDS - check_elapsed)
             idle = max(0, IDLE_THRESHOLD_SECONDS - elapsed)
             status_label.config(text=f"Status: {'Paused' if idle_mode else 'Active'}")
             cooldown_label.config(text=f"Cooldown Remaining: {cooldown} seconds")
